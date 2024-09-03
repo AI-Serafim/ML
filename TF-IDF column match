@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# link to files
+path1 = r"\file1.xlsx"
+path2 = r"\file2.xlsx"
+
+# read data from excel
+df1 = pd.read_excel(path1)
+df2 = pd.read_excel(path2)
+
+# extracting selected columns
+df1_names = df1['df1_name'].astype(str)
+df2_names = df2['df2_name'].astype(str)
+
+# cleaning
+df1_cleaned = df1_names.str.lower().str.replace(r'[^\w\s]', '', regex=True)
+df2_cleaned = df2_names.str.lower().str.replace(r'[^\w\s]', '', regex=True)
+
+# merge
+combined_names = pd.concat([df1_cleaned, df2_cleaned])
+
+# TF-IDF vectorizing
+vectorizer = TfidfVectorizer().fit(combined_names)
+tfidf_1 = vectorizer.transform(df1_cleaned)
+tfidf_1 = vectorizer.transform(df2_cleaned)
+
+similarities = cosine_similarity(tfidf_1, tfidf_2)
+
+similarities_df = pd.DataFrame(similarities, index=df1_names, columns=df2_names)
+
+best_matches = similarities_df.idxmax(axis=1)
+best_scores = similarities_df.max(axis=1)
+
+result_df = df1.copy()
+result_df['best_match'] = best_matches.values
+result_df['similarity_score'] = best_scores.values
+
+result_path = r"\matched_results.xlsx"
+result_df.to_excel(result_path, index=False)
+
+print(f"Result in file: {result_path}")
